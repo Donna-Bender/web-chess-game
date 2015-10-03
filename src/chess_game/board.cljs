@@ -1,5 +1,7 @@
 (ns ^:figwheel-always chess-game.board
-  (:require [chess-game.moves :as m]))
+  (:require [chess-game.moves :as m]
+            [clj-di.core :refer [get-dep register!]]
+            ))
 
 (defn make-chessman
   [color type start-x start-y]
@@ -60,7 +62,9 @@
   [chessboard old-pos new-pos]
   ; TODO: check for move allowance
   (if (m/allowed? chessboard old-pos new-pos)
-    (assoc chessboard
-      old-pos nil
-      new-pos (get chessboard old-pos))
+    (do
+
+      (assoc chessboard
+             old-pos nil
+             new-pos (get chessboard old-pos)))
     chessboard))

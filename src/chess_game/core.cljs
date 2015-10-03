@@ -3,6 +3,7 @@
             [quil.middleware]
             [jayq.core :as jq]
             [clj-di.core :refer [get-dep register!]]
+            [chess-game.moves :as m]
             [chess-game.config :as config]
             [chess-game.images :refer [get-images!]]
             [chess-game.board :as board]
@@ -20,6 +21,7 @@
   (let [env (atom {})]
     (swap! env assoc
            :chessboard (board/make-standard-board)
+           :legal-next-moves []
            :selected-tile nil)
     (register! :env env
                :images (get-images!))))
@@ -34,12 +36,20 @@
   [{:keys [x y]}]
   "Mark the tile selected by the click event"
   (let [env (get-dep :env)
-        {:keys [selected-tile chessboard]} @env
-        selected (map #(.floor js/Math (/ % config/tile-size))
-                      [x y])]
+        {:keys [selected-tile legal-next-moves chessboard]} @env
+        selected              (map #(.floor js/Math (/ % config/tile-size))  [x y])
+        clear-selected-tile   (m/allowed? chessboard selected-tile selected)
+        legal-next-moves      (m/legal-moves-for selected
+                                                 (get chessboard selected) chessboard)
+        ]
+
+    (println "Next legal moves => " legal-next-moves)
+
     (swap! env assoc
-           :selected-tile (when-not (= selected-tile selected)
-                            selected)
+           :selected-tile (if clear-selected-tile
+                            nil
+                            (when-not (= selected-tile selected) selected))
+           :legal-next-moves legal-next-moves
            :chessboard (board/update-board chessboard
                                            selected-tile
                                            selected))))

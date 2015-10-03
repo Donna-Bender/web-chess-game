@@ -1,50 +1,77 @@
 (ns chess-game.moves)
 
-(defn try-moves-for-rook
+
+;; Legal moves
+
+(defn legal-moves-for-rook
   [curr-pos color chessboard]
   "Attempt moves in all the cardinal directions."
-  nil)
+  [])
 
-(defn try-moves-for-knight [curr-pos color chessboard]
-  "Attempt jumps in adjacent corners"
-  nil)
-
-(defn try-moves-for-bishop [curr-pos color chessboard]
-  ""
-  nil)
-
-(defn try-moves-for-queen [curr-pos color chessboard]
-  nil)
-
-(defn try-moves-for-king [curr-pos color chessboard]
-  nil)
-
-(defn try-moves-for-pawn
+(defn legal-moves-for-knight
   [curr-pos color chessboard]
-  nil)
+  "Attempt jumps in adjacent corners"
+  (let [x (first curr-pos)
+        y (second curr-pos)]
+    [
+     [(- x 1) (+ y 2)]
+     [(+ x 1) (+ y 2)]
+
+     [(- x 1) (- y 2)]
+     [(+ x 1) (- y 2)]
+
+
+     ]))
+
+(defn legal-moves-for-bishop
+  [curr-pos color chessboard]
+  "Attempt moves in all the diagonal directions"
+  [])
+
+(defn legal-moves-for-queen
+  [curr-pos color chessboard]
+  "Attempt moves in all the diagonal directions and all the cardinal directions"
+  [])
+
+(defn legal-moves-for-king
+  [curr-pos color chessboard]
+  "Attempt moves in all the diagonal directions and the cardinal directions by only one space"
+  [])
+
+(defn legal-moves-for-pawn
+  [curr-pos color chessboard]
+  "Attempt forward by 2 on first move.
+   Attempt forward by one after the piece moved.
+   Attempt diagonal forward by one space when enemy present"
+  [])
+
+(defn legal-moves-for-rook
+  [curr-pos color chessboard]
+  "Attempt moves in all the cardinal directions."
+  [])
 
 (defn legal-move? [start-pos dest-pos chessman chessboard]
   "Decide of the move of chessman to dest-pos"
   nil)
 
-(defn try-moves-for
-  [curr-pos {:keys [color typ]} chessboard]
-  "A list of positions to try, not necessarily legal."
+(defn legal-moves-for
+  [curr-pos {:keys [color type]} chessboard]
+  "The list of all legal moves for the selected chessman"
+
+  (print "Finding legal moves for type" type)
+
   (case type
-    :rook (try-moves-for-rook curr-pos color chessboard)
-    :knight (try-moves-for-rook curr-pos color chessboard)
-    :bishop (try-moves-for-rook curr-pos color chessboard)
-    :queen (try-moves-for-rook curr-pos color chessboard)
-    :king (try-moves-for-rook curr-pos color chessboard)
-    :pawn (try-moves-for-pawn curr-pos color chessboard)))
+    :pawn   (legal-moves-for-pawn curr-pos color chessboard)
+    :knight (legal-moves-for-knight curr-pos color chessboard)
+    :queen  (legal-moves-for-queen curr-pos color chessboard)
+    :king   (legal-moves-for-king curr-pos color chessboard)
+    :bishop (legal-moves-for-bishop curr-pos color chessboard)
+    :rook   (legal-moves-for-rook curr-pos color chessboard)
+    nil     []
+    )
+  )
 
-(defn moves-for
-  [curr-pos chessman chessboard]
-  "Returns a pair (x y) for each possible move location
-  for the chessman."
 
-  (let [moves-to-try (try-moves-for curr-pos chessman chessboard)]
-    (filter #(legal-move? curr-pos % chessman chessboard) moves-to-try)))
 
 (defn allowed?
   [chessboard old-pos new-pos]
