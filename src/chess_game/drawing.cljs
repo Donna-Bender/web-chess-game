@@ -1,4 +1,4 @@
-(ns chess-game.drawing
+(ns ^:figwheel-always chess-game.drawing
   (:require [clj-di.core :refer [get-dep]]
             [chess-game.graphics :as graphics]
             [chess-game.images :as images]
@@ -118,7 +118,6 @@ There are probably lots more, but those are just some of them that came off the 
         ]
 
     (tile-fill-color i j selected legal-next-move)))
-
 
 (defn show-legal-moves
   []
