@@ -60,11 +60,12 @@
 
 (defn update-board
   [chessboard old-pos new-pos]
-  ; TODO: check for move allowance
-  (if (m/allowed? chessboard old-pos new-pos)
+  (let [chessman (get chessboard old-pos)]
     (do
-
-      (assoc chessboard
-             old-pos nil
-             new-pos (get chessboard old-pos)))
-    chessboard))
+      (if (m/allowed? chessboard old-pos new-pos)
+        (do
+          (println "update-board chessman is: "  (assoc chessman :has-moved true))
+          (assoc chessboard old-pos nil new-pos (assoc chessman :has-moved true))
+          )
+        chessboard)
+      )))

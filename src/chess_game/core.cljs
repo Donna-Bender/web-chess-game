@@ -49,7 +49,9 @@
            :selected-tile (if clear-selected-tile
                             nil
                             (when-not (= selected-tile selected) selected))
-           :legal-next-moves legal-next-moves
+           :legal-next-moves (if (= selected-tile selected)
+                               []
+                               legal-next-moves)
            :chessboard (board/update-board chessboard
                                            selected-tile
                                            selected))))
@@ -60,39 +62,16 @@
    :y (q/mouse-y)
    :button (q/mouse-button)})
 
-(def counter (atom 1))
-
 (defn on-mouse-pressed
   []
   "Handle mouse press"
   (mark-selected-tile! (mouse-event-full)))
 
-
-;; define your app data so that it doesn't get over-written on reload
-
-(fw/start {
-           ;; configure a websocket url if you are using your own server
-           ;; :websocket-url "ws://localhost:3449/figwheel-ws"
-
-           ;; optional callback
-           :on-jsload (fn [] (print "reloaded"))
-
-           ;; The heads up display is enabled by default
-           ;; to disable it:
-           ;; :heads-up-display false
-
-           ;; when the compiler emits warnings figwheel
-           ;; blocks the loading of files.
-           ;; To disable this behavior:
-           ;; :load-warninged-code true
-
-           ;; if figwheel is watching more than one build
-           ;; it can be helpful to specify a build id for
-           ;; the client to focus on
-           ;; :build-id "example"
-           })
-
-
-
-(defn setup []
-  nil)
+(jq/document-ready
+  (try (q/sketch :title "Chess board"
+                 :size config/board-size
+                 :host "canvas"
+                 :setup setup!
+                 :mouse-pressed on-mouse-pressed
+                 :draw draw!)
+       (catch :default e (.error js/console e))))
