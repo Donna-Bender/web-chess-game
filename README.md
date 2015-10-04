@@ -2,6 +2,11 @@
 
 ClojureScript plus HTML5 canvas = Chess Game that should be relatively platform independent.
 
+## TODO
+
+* Add legal moves and attack moves (DONE)
+* Update graphics with latest designer
+
 ## Testing
 For using code after this changes you need bower:
 
