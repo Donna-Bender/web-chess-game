@@ -21,7 +21,8 @@
   (let [env (atom {})]
     (swap! env assoc
            :chessboard (board/make-standard-board)
-           :legal-next-moves []
+           :legal-moves []
+           :attack-moves []
            :selected-tile nil)
     (register! :env env
                :images (get-images!))))
@@ -36,25 +37,33 @@
   [{:keys [x y]}]
   "Mark the tile selected by the click event"
   (let [env (get-dep :env)
-        {:keys [selected-tile legal-next-moves chessboard]} @env
+        {:keys [selected-tile chessboard]} @env
         selected              (map #(.floor js/Math (/ % config/tile-size))  [x y])
         clear-selected-tile   (m/allowed? chessboard selected-tile selected)
-        legal-next-moves      (m/legal-moves-for selected
-                                                 (get chessboard selected) chessboard)
+        legal-moves           (m/legal-moves-for
+                               selected
+                               (get chessboard selected) chessboard)
+        attack-moves          (m/attack-moves-for
+                               selected
+                               (get chessboard selected) chessboard)
         ]
 
-    (println "Next legal moves => " legal-next-moves)
+    (println "Next legal moves => " legal-moves)
+    (println "Next attack moves => " attack-moves)
 
     (swap! env assoc
            :selected-tile (if clear-selected-tile
                             nil
                             (when-not (= selected-tile selected) selected))
-           :legal-next-moves (if (= selected-tile selected)
-                               []
-                               legal-next-moves)
-           :chessboard (board/update-board chessboard
-                                           selected-tile
-                                           selected))))
+           :legal-moves   (if (= selected-tile selected)
+                            []
+                            legal-moves)
+           :attack-moves  (if (= selected-tile selected)
+                            []
+                            attack-moves)
+           :chessboard    (board/update-board chessboard
+                                              selected-tile
+                                              selected))))
 
 (defn mouse-event-full
   []

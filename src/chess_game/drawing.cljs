@@ -29,7 +29,7 @@
 (defn dark-red
   [scale]
   "A dark red color, designed for showing the next legal move."
-  (graphics/make-color (+ scale 50) scale scale 50))
+  (graphics/make-color (+ scale 50) scale scale))
 
 
 (defn draw-chessmens!
@@ -39,16 +39,25 @@
     (when chessman
       (images/draw-chessman! chessman pos))))
 
-(defn white-legal-next-move
+(defn white-legal-move
   []
-  "Square is legal next move"
+  "Square is legal move"
+  (light-blue 200))
+
+(defn white-attack-move
+  []
+  "Square is attack move"
   (light-red 200))
 
-(defn black-legal-next-move
+(defn black-legal-move
   []
-  "Square is legal next move"
-  (dark-red 50))
+  "Square is legal move"
+  (dark-blue 50))
 
+(defn black-attack-move
+  []
+  "Square is attack move"
+  (dark-red 50))
 
 (defn white-default
   []
@@ -69,7 +78,7 @@
   (dark-blue 50))
 
 (defn tile-fill
-  [color selected legal-next-move]
+  [color selected legal-next-move attack]
   "Fill the tile based on color (:white or :black) and whether the tile is currently selected.
 This function will probably take a symbol in the future, with a limited set of valid symbols
 that the square can be in. For example, the square could be:
@@ -82,15 +91,21 @@ that the square can be in. For example, the square could be:
 
 There are probably lots more, but those are just some of them that came off the top of my head.
 "
-  (condp = [color selected legal-next-move]
-    [:white false true] (white-legal-next-move)
-    [:black false true] (black-legal-next-move)
+  (condp = [color selected legal-next-move attack]
+    [:white false false true] (white-attack-move)
+    [:black false false true] (black-attack-move)
+    [:white false true  true] (white-attack-move)
+    [:black false true  true] (black-attack-move)
 
-    [:white true  false] (white-selected)
-    [:black true  false] (black-selected)
+    [:white false true  false] (white-legal-move)
+    [:black false true  false] (black-legal-move)
 
-    [:white false false] (white-default)
-    [:black false false] (black-default)
+
+    [:white true  false false] (white-selected)
+    [:black true  false false] (black-selected)
+
+    [:white false false false] (white-default)
+    [:black false false false] (black-default)
     ))
 
 (defn square-should-be-white?
@@ -105,24 +120,19 @@ There are probably lots more, but those are just some of them that came off the 
     :black))
 
 (defn tile-fill-color
-  [x y selected legal-next-move]
-  (tile-fill (square-color x y) selected legal-next-move))
+  [x y selected legal-move attack-move]
+  (tile-fill (square-color x y) selected legal-move attack-move))
 
 (defn get-color-from
   [i j]
   (let [
         env (get-dep :env)
-        selected (= [i j] (:selected-tile @env))
-        legal-next-move (boolean (some #(= [i j] %) (:legal-next-moves @env)))
-        ;; legal-next-move (contains? (:legal-next-moves @env) [i j])
+        selected        (= [i j] (:selected-tile @env))
+        legal-move      (boolean (some #(= [i j] %) (:legal-moves @env)))
+        attack-move     (boolean (some #(= [i j] %) (:attack-moves @env)))
         ]
-
-    (tile-fill-color i j selected legal-next-move)))
-
-(defn show-legal-moves
-  []
-  (let [env (get-dep :env)]
-    (println "Legal next moves are " (:legal-next-moves @env))))
+    (do
+      (tile-fill-color i j selected legal-move attack-move))))
 
 (defn draw-checkered-board
   []
