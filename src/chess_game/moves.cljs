@@ -1,12 +1,11 @@
 (ns ^:figwheel-always chess-game.moves
     (:require [chess-game.directions :as d]))
 
-
 (defn moves-for-f
   [f curr-x curr-y color chessboard]
   (println "moves-for-f where x, y: " curr-x "," curr-y)
   (for [pos (f curr-x curr-y)
-        :when (nil? (get chessboard pos))]
+        :while (nil? (get chessboard pos))]
     pos))
 
 (defn attack-for-f
@@ -24,7 +23,6 @@
     (if (or (empty? v) (= (:color (get chessboard (first v))) curr-color))
       []
       v)))
-
 
 (defn legal-moves-for-rook
   [x y color chessboard]
