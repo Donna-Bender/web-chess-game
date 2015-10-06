@@ -8,7 +8,6 @@
         :when (== (+ x y) (+ curr-x curr-y))
         ]
     (do
-      (println "*** diagonal-lower-left x, y: " x ", " y)
       [x y])
     ))
 
@@ -20,7 +19,6 @@
         :when (== (- x y) (- curr-x curr-y))
         ]
     (do
-      (println "*** diagonal-lower-right x, y: " x ", " y)
       [x y])
     ))
 
@@ -32,7 +30,7 @@
         :when (== (+ x y) (+ curr-x curr-y))
         ]
     (do
-      (println "*** diagonal-upper-right x, y: " x ", " y)
+
       [x y])
     ))
 
@@ -44,7 +42,6 @@
         :when (== (- x y) (- curr-x curr-y))
         ]
     (do
-      (println "*** diagonal-upper-left x, y: " x ", " y)
       [x y])
     ))
 
@@ -54,7 +51,6 @@
 
   (for [x (range (+ curr-x 1) 8)]
     (do
-      (println "*** move-right x, y: " x ", " curr-y)
       [x curr-y])
     ))
 
@@ -63,7 +59,6 @@
 
   (for [x (reverse (range 0 curr-x))]
     (do
-      (println "*** move-left x, y: " x ", " curr-y)
       [x curr-y])
     ))
 
@@ -72,7 +67,6 @@
 
   (for [y (range (+ curr-y 1) 8)]
     (do
-      (println "*** move-down x, y: " curr-x ", " y)
       [curr-x y])
     ))
 
@@ -81,12 +75,25 @@
 
   (for [y (reverse (range 0 curr-y))]
     (do
-      (println "*** move-up x, y: " curr-x ", " y)
       [curr-x y])
     ))
 
 
-(defn moves-for-knight
+(defn on-board?
+  "Make sure that n can live on the board. For that to happen it has
+  to be between 0 and 7, e.g. 0 <= n <= 7"
+  [n]
+  (and (<= n 0)
+       (>= n 7)))
+
+(defn pos-on-board?
+  [pos]
+  (let [x (first pos)
+        y (second pos)]
+    (and (on-board? x)
+         (on-board? y))))
+
+(defn all-directions-of-knight
   [x y]
   [
    [(- x 1) (+ y 2)]
@@ -102,7 +109,10 @@
    [(+ x 2) (- y 1)]
    ])
 
-
+(defn moves-for-knight
+  [x y]
+  (let [positions (all-directions-of-knight x y)]
+    (filter #(pos-on-board? %) positions)))
 
 (defn moves-by-1
   [f x y]

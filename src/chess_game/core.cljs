@@ -6,7 +6,7 @@
             [chess-game.moves :as m]
             [chess-game.config :as config]
             [chess-game.images :refer [get-images!]]
-            [chess-game.board :as board]
+            [chess-game.board :as b]
             [chess-game.drawing :as drawing]))
 
 (enable-console-print!)
@@ -16,54 +16,66 @@
   ;; :chessboard
   ;; A hash-map representing the current chessboard
   ;;
-  ;; :selected-tile
+  ;; :curr-tile
   ;; The currently selected tile, after being clicked
   (let [env (atom {})]
     (swap! env assoc
-           :chessboard (board/make-standard-board)
+           :chessboard (b/make-standard-board)
            :legal-moves []
            :attack-moves []
-           :selected-tile nil)
+           :curr-tile nil)
     (register! :env env
                :images (get-images!))))
 
 (defn draw!
-  []
   "Draw the sketch"
+  []
   (drawing/draw-checkered-board)
   (drawing/draw-chessmens!))
 
-(defn mark-selected-tile!
-  [{:keys [x y]}]
+(defn selected-from
+  [x y]
+  (map #(.floor js/Math (/ % config/tile-size)) [x y]))
+
+(defn legal-moves
+  [curr-tile selected selected-piece chessboard]
+  (if (= curr-tile selected)
+    []
+    (m/legal-moves-for selected selected-piece chessboard)))
+
+
+(defn print-scores
+  [word board]
+  (println word "move white score = " (b/score :white board))
+  (println word "move black score = " (b/score :black board)))
+
+
+(defn try-to-mark-tile!
   "Mark the tile selected by the click event"
+  [{:keys [x y]}]
   (let [env (get-dep :env)
-        {:keys [selected-tile chessboard]} @env
-        selected              (map #(.floor js/Math (/ % config/tile-size))  [x y])
-        clear-selected-tile   (m/allowed? chessboard selected-tile selected)
-        legal-moves           (m/legal-moves-for
-                               selected
-                               (get chessboard selected) chessboard)
-        attack-moves          (m/attack-moves-for
-                               selected
-                               (get chessboard selected) chessboard)
-        ]
+        {:keys [curr-tile chessboard]} @env
+        selected              (selected-from x y)
+        selected-piece        (get chessboard selected)
+        piece-moved           (m/allowed? chessboard curr-tile selected)
+        attack-moves          (m/attack-moves-for selected selected-piece chessboard)]
 
-    (println "Next legal moves => " legal-moves)
-    (println "Next attack moves => " attack-moves)
+    (let [new-chessboard (b/update chessboard curr-tile selected)
+          legal-moves    (legal-moves curr-tile selected selected-piece chessboard)
+          new-curr-tile  (if piece-moved
+                           nil
+                           (when-not (= curr-tile selected) selected))]
+      (if piece-moved
+        (print-scores "After" new-chessboard))
 
-    (swap! env assoc
-           :selected-tile (if clear-selected-tile
-                            nil
-                            (when-not (= selected-tile selected) selected))
-           :legal-moves   (if (= selected-tile selected)
-                            []
-                            legal-moves)
-           :attack-moves  (if (= selected-tile selected)
-                            []
-                            attack-moves)
-           :chessboard    (board/update-board chessboard
-                                              selected-tile
-                                              selected))))
+      (swap! env assoc
+             :curr-tile     new-curr-tile
+             :legal-moves   legal-moves
+             :attack-moves  (if (= curr-tile selected)
+                              []
+                              attack-moves)
+             :chessboard    new-chessboard)
+    )))
 
 (defn mouse-event-full
   []
@@ -74,7 +86,7 @@
 (defn on-mouse-pressed
   []
   "Handle mouse press"
-  (mark-selected-tile! (mouse-event-full)))
+  (try-to-mark-tile! (mouse-event-full)))
 
 (jq/document-ready
   (try (q/sketch :title "Chess board"

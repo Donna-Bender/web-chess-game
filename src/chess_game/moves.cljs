@@ -1,5 +1,7 @@
 (ns ^:figwheel-always chess-game.moves
-    (:require [chess-game.directions :as d]))
+    (:require [chess-game.directions :as d]
+              [chess-game.pieces :as p]
+              ))
 
 (defn open?
   [pos chessboard]
@@ -15,14 +17,12 @@
 
 (defn moves-for-f
   [f curr-x curr-y color chessboard]
-  (println "moves-for-f where x, y: " curr-x "," curr-y)
   (for [pos (f curr-x curr-y)
         :while (open? pos chessboard)]
     pos))
 
 (defn attack-for-f
   [f curr-x curr-y curr-color chessboard]
-  (println "attacks-for-f where x, y: " curr-x "," curr-y)
   (let [v (filter #(some? (get chessboard %)) (f curr-x curr-y))]
     (if (or (empty? v) (= (color-of (first v) chessboard) curr-color))
       []
@@ -30,41 +30,34 @@
 
 (defn attacks-for-f
   [f curr-x curr-y curr-color chessboard]
-  (println "attacks-for-f where x, y: " curr-x "," curr-y)
   (let [v (filter #(some? (get chessboard %)) (f curr-x curr-y))]
     (if (or (empty? v) (= (color-of (first v) chessboard) curr-color))
       []
       v)))
 
 (defn legal-moves-for-rook
+  "Attempt moves in all the cardinal directions."
   [x y color chessboard]
-  (do
-    "Attempt moves in all the cardinal directions."
-    (println "legal-moves-for-rook x, y: " x ", " y)
-     (concat
-      (moves-for-f d/move-right x y color chessboard)
-      (moves-for-f d/move-left x y color chessboard)
-      (moves-for-f d/move-down x y color chessboard)
-      (moves-for-f d/move-up x y color chessboard)
-      )))
+  (concat
+   (moves-for-f d/move-right x y color chessboard)
+   (moves-for-f d/move-left x y color chessboard)
+   (moves-for-f d/move-down x y color chessboard)
+   (moves-for-f d/move-up x y color chessboard)
+   ))
 
 (defn attack-moves-for-rook
+  "Attempt attacks in all the cardinal directions."
   [x y color chessboard]
-  (do
-    "Attempt attacks in all the cardinal directions."
-    (println "attack-moves-for-rook x, y: " x ", " y)
-     (concat
-      (attack-for-f d/move-right x y color chessboard)
-      (attack-for-f d/move-left x y color chessboard)
-      (attack-for-f d/move-down x y color chessboard)
-      (attack-for-f d/move-up x y color chessboard)
-      )))
+  (concat
+   (attack-for-f d/move-right x y color chessboard)
+   (attack-for-f d/move-left x y color chessboard)
+   (attack-for-f d/move-down x y color chessboard)
+   (attack-for-f d/move-up x y color chessboard)
+   ))
 
 (defn legal-moves-for-knight
-  [curr-x curr-y color chessboard]
   "Attempt jumps in adjacent corners"
   [curr-x curr-y color chessboard]
-  (println "legal-moves-for-knight where x, y: " curr-x "," curr-y)
   (for [pos (d/moves-for-knight curr-x curr-y)
         :when (open? pos chessboard)]
     pos))
@@ -73,11 +66,10 @@
 (defn attackable?
   [curr-color chessboard curr-pos]
   (and (filled? curr-pos chessboard)
-       (not= curr-color (color-of curr-pos))))
+       (not= curr-color (color-of curr-pos chessboard))))
 
 (defn attack-moves-for-knight
   [curr-x curr-y curr-color chessboard]
-  (println "attacks-for-knight where x, y: " curr-x "," curr-y)
   (let [
         moves     (d/moves-for-knight curr-x curr-y)
         available (filter #(some? (get chessboard %)) moves)
@@ -89,16 +81,14 @@
 
 
 (defn legal-moves-for-bishop
-  [x y color chessboard]
   "Attempt moves in all the diagonal directions"
-  (do
-    (println "legal-moves-for-bishop x, y: " x ", " y)
-    (concat
-     (moves-for-f d/diagonal-upper-right x y color chessboard)
-     (moves-for-f d/diagonal-lower-left x y color chessboard)
-     (moves-for-f d/diagonal-lower-right x y color chessboard)
-     (moves-for-f d/diagonal-upper-left x y color chessboard)
-     )))
+  [x y color chessboard]
+  (concat
+   (moves-for-f d/diagonal-upper-right x y color chessboard)
+   (moves-for-f d/diagonal-lower-left x y color chessboard)
+   (moves-for-f d/diagonal-lower-right x y color chessboard)
+   (moves-for-f d/diagonal-upper-left x y color chessboard)
+   ))
 
 (defn attack-moves-for-bishop
   [x y color chessboard]
@@ -111,8 +101,8 @@
 
 
 (defn legal-moves-for-queen
-  [x y color chessboard]
   "Attempt moves in all the diagonal directions and all the cardinal directions"
+  [x y color chessboard]
   (concat
    (moves-for-f d/move-right x y color chessboard)
    (moves-for-f d/move-left x y color chessboard)
@@ -137,8 +127,8 @@
    (attack-for-f d/diagonal-upper-left x y color chessboard)))
 
 (defn legal-moves-for-king
-  [x y color chessboard]
   "Attempt moves in all the diagonal directions and the cardinal directions by only one space"
+  [x y color chessboard]
   (concat
    (moves-for-f d/diagonal-upper-right-by-1 x y color chessboard)
    (moves-for-f d/diagonal-lower-left-by-1 x y color chessboard)
@@ -166,10 +156,10 @@
 
 
 (defn legal-moves-for-pawn
-  [x y color chessboard has-moved]
   "Attempt forward by 2 on first move.
    Attempt forward by one after the piece moved.
    Attempt diagonal forward by one space when enemy present"
+  [x y color chessboard has-moved]
   (if (= color :black)
     (do
       (if has-moved
@@ -205,40 +195,56 @@
       :queen  (attack-moves-for-queen x y color chessboard)
       :king   (attack-moves-for-king x y color chessboard)
       :bishop (attack-moves-for-bishop x y color chessboard)
-      :rook   (do
-                (println "Got type :rook")
-                (attack-moves-for-rook x y color chessboard))
-      nil     (do
-                (println "Got type nil")
-                [])
+      :rook   (attack-moves-for-rook x y color chessboard)
+      nil     []
     )))
 
-(defn legal-moves-for
-  [curr-pos {:keys [color type has-moved]} chessboard]
-  "The list of all legal moves for the selected chessman"
+(defn legal-moves-by-type
+  [type x y color has-moved chessboard]
+  (case type
+    :pawn   (legal-moves-for-pawn x y color chessboard has-moved)
+    :knight (legal-moves-for-knight x y color chessboard)
+    :queen  (legal-moves-for-queen x y color chessboard)
+    :king   (legal-moves-for-king x y color chessboard)
+    :bishop (legal-moves-for-bishop x y color chessboard)
+    :rook   (legal-moves-for-rook x y color chessboard)
+    nil     []
+    ))
 
-  (print "Finding legal moves for type" type)
+(defn legal-moves-for-piece
+  [piece chessboard]
+  (let [type      (:type piece)
+        pos       (:curr-pos piece)
+        x         (first pos)
+        y         (second pos)
+        color     (:color piece)
+        has-moved (:has-moved piece)
+        legal-moves (legal-moves-by-type type x y color has-moved chessboard)
+        ]
+    ;; (println "# of legal moves for " type " of color " color " are " (count legal-moves))
+    legal-moves))
+
+(defn total-legal-moves
+  [curr-color chessboard]
+  (let [positions  (keys chessboard)
+        all-pieces (map #(get chessboard %) positions)
+        curr-pieces (filter #(p/color-matches? curr-color %) all-pieces)
+        counts (map #(count (legal-moves-for-piece % chessboard)) curr-pieces)
+        ]
+    (reduce + 0 counts)))
+
+
+
+(defn legal-moves-for
+  "The list of all legal moves for the selected chessman"
+  [curr-pos {:keys [color type has-moved]} chessboard]
   (let [x (first curr-pos)
         y (second curr-pos)]
-    (println "Feeding x y to all legal moves: " x ", " y)
-    (println "Type is: " type)
-    (case type
-      :pawn   (legal-moves-for-pawn x y color chessboard has-moved)
-      :knight (legal-moves-for-knight x y color chessboard)
-      :queen  (legal-moves-for-queen x y color chessboard)
-      :king   (legal-moves-for-king x y color chessboard)
-      :bishop (legal-moves-for-bishop x y color chessboard)
-      :rook   (do
-                (println "Got type :rook")
-                (legal-moves-for-rook x y color chessboard))
-      nil     (do
-                (println "Got type nil")
-                [])
-      )))
+    (legal-moves-by-type type x y color has-moved chessboard)))
 
 (defn allowed?
-  [chessboard old-pos new-pos]
   "Returns true when move allowed"
+  [chessboard old-pos new-pos]
   ;; TODO: perform reall check
   (let [old-chessman (get chessboard old-pos)
         new-chessman (get chessboard new-pos)]
