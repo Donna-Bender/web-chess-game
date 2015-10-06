@@ -69,3 +69,36 @@
           )
         chessboard)
       )))
+
+(defn opposite
+  [color]
+  (condp color
+      :white :black
+      :black :white))
+
+(defn kings-count-for
+  [color chessboard]
+  (count-for kings-of color chessboard))
+
+(defn pawns-count-for
+  [color chessboard]
+  (count-for pawns-of color chessboard))
+
+(defn knights-count-for
+  [color chessboard]
+  (count-for knights-of color chessboard))
+
+(defn count-for
+  [f color chessboard]
+  (- (length (f color))
+     (length (f chessboard (opposite color)))))
+
+(defn score
+  "This is the Claude Shannon formula featured on: https://chessprogramming.wikispaces.com/Evaluation"
+  [color chessboard]
+  (let [k (- (length (kings-of color))
+             (length (kings-of (opposite color))))
+        q (-
+
+
+   ))

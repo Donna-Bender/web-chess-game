@@ -1,18 +1,30 @@
 (ns ^:figwheel-always chess-game.moves
     (:require [chess-game.directions :as d]))
 
+(defn open?
+  [pos chessboard]
+  (nil? (get chessboard pos)))
+
+(defn filled?
+  [pos chessboard]
+  (some? (get chessboard pos)))
+
+(defn color-of
+  [pos chessboard]
+  (:color (get chessboard pos)))
+
 (defn moves-for-f
   [f curr-x curr-y color chessboard]
   (println "moves-for-f where x, y: " curr-x "," curr-y)
   (for [pos (f curr-x curr-y)
-        :while (nil? (get chessboard pos))]
+        :while (open? pos chessboard)]
     pos))
 
 (defn attack-for-f
   [f curr-x curr-y curr-color chessboard]
   (println "attacks-for-f where x, y: " curr-x "," curr-y)
   (let [v (filter #(some? (get chessboard %)) (f curr-x curr-y))]
-    (if (or (empty? v) (= (:color (get chessboard (first v))) curr-color))
+    (if (or (empty? v) (= (color-of (first v) chessboard) curr-color))
       []
       (vector (first v)))))
 
@@ -20,7 +32,7 @@
   [f curr-x curr-y curr-color chessboard]
   (println "attacks-for-f where x, y: " curr-x "," curr-y)
   (let [v (filter #(some? (get chessboard %)) (f curr-x curr-y))]
-    (if (or (empty? v) (= (:color (get chessboard (first v))) curr-color))
+    (if (or (empty? v) (= (color-of (first v) chessboard) curr-color))
       []
       v)))
 
@@ -49,13 +61,32 @@
       )))
 
 (defn legal-moves-for-knight
-  [x y color chessboard]
+  [curr-x curr-y color chessboard]
   "Attempt jumps in adjacent corners"
-  (moves-for-f d/moves-for-knight x y color chessboard))
+  [curr-x curr-y color chessboard]
+  (println "legal-moves-for-knight where x, y: " curr-x "," curr-y)
+  (for [pos (d/moves-for-knight curr-x curr-y)
+        :when (open? pos chessboard)]
+    pos))
+
+
+(defn attackable?
+  [curr-color chessboard curr-pos]
+  (and (filled? curr-pos chessboard)
+       (not= curr-color (color-of curr-pos))))
 
 (defn attack-moves-for-knight
-  [x y color chessboard]
-  (attacks-for-f d/moves-for-knight x y color chessboard))
+  [curr-x curr-y curr-color chessboard]
+  (println "attacks-for-knight where x, y: " curr-x "," curr-y)
+  (let [
+        moves     (d/moves-for-knight curr-x curr-y)
+        available (filter #(some? (get chessboard %)) moves)
+        attacking (filter attackable? moves)
+        ]
+    (if (empty? attacking)
+      []
+      attacking)))
+
 
 (defn legal-moves-for-bishop
   [x y color chessboard]
