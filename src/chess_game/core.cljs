@@ -37,11 +37,6 @@
   [x y]
   (map #(.floor js/Math (/ % config/tile-size)) [x y]))
 
-(defn legal-moves
-  [curr-tile selected selected-piece chessboard]
-  (if (= curr-tile selected)
-    []
-    (m/legal-moves-for selected selected-piece chessboard)))
 
 
 (defn print-scores
@@ -49,28 +44,41 @@
   (println word "move white score = " (b/score :white board))
   (println word "move black score = " (b/score :black board)))
 
+(defn in?
+  [seq elem]
+  (some #(= elem %) seq))
 
 (defn try-to-mark-tile!
   "Mark the tile selected by the click event"
   [{:keys [x y]}]
   (let [env (get-dep :env)
-        {:keys [curr-tile chessboard]} @env
+        {:keys [legal-moves curr-tile chessboard]} @env
         selected              (selected-from x y)
         selected-piece        (get chessboard selected)
-        piece-moved           (m/allowed? chessboard curr-tile selected)
-        attack-moves          (m/attack-moves-for selected selected-piece chessboard)]
+        curr-legal-moves      (if (= curr-tile selected)
+                                []
+                                (m/legal-moves-for
+                                 selected selected-piece chessboard))
+        attack-moves          (m/attack-moves-for
+                               selected selected-piece chessboard)]
 
-    (let [new-chessboard (b/update chessboard curr-tile selected)
-          legal-moves    (legal-moves curr-tile selected selected-piece chessboard)
-          new-curr-tile  (if piece-moved
-                           nil
-                           (when-not (= curr-tile selected) selected))]
-      (if piece-moved
+    (println "Last legal moves are " legal-moves)
+    (println "Current legal moves are " curr-legal-moves)
+    (println "Will the piece move? " (in? legal-moves selected))
+
+    (let [piece-will-move       (in? legal-moves selected)
+          new-chessboard        (if piece-will-move
+                                  (b/update chessboard curr-tile selected)
+                                  chessboard)
+          new-curr-tile         (if piece-will-move
+                                  nil
+                                  (when-not (= curr-tile selected) selected))]
+      (if piece-will-move
         (print-scores "After" new-chessboard))
 
       (swap! env assoc
              :curr-tile     new-curr-tile
-             :legal-moves   legal-moves
+             :legal-moves   curr-legal-moves
              :attack-moves  (if (= curr-tile selected)
                               []
                               attack-moves)

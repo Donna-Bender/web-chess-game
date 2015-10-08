@@ -83,8 +83,8 @@
   "Make sure that n can live on the board. For that to happen it has
   to be between 0 and 7, e.g. 0 <= n <= 7"
   [n]
-  (and (<= n 0)
-       (>= n 7)))
+  (and (>= n 0)
+       (<= n 7)))
 
 (defn pos-on-board?
   [pos]

@@ -108,7 +108,6 @@
         p (pawns-count-for color chessboard)
         m (mobility-for color chessboard)
         ]
-    ;; (println "m is " m)
     (+
      (* 200.0   k)
      (*   9.0   q)

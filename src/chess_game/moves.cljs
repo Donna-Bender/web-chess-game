@@ -58,9 +58,12 @@
 (defn legal-moves-for-knight
   "Attempt jumps in adjacent corners"
   [curr-x curr-y color chessboard]
-  (for [pos (d/moves-for-knight curr-x curr-y)
-        :when (open? pos chessboard)]
-    pos))
+  ;; (println "Finding legal moves for knight")
+  (let [all-moves (d/moves-for-knight curr-x curr-y)]
+    ;; (println "All possible moves are" all-moves)
+    (for [pos all-moves
+          :when (open? pos chessboard)]
+      pos)))
 
 
 (defn attackable?
@@ -239,8 +242,11 @@
   "The list of all legal moves for the selected chessman"
   [curr-pos {:keys [color type has-moved]} chessboard]
   (let [x (first curr-pos)
-        y (second curr-pos)]
-    (legal-moves-by-type type x y color has-moved chessboard)))
+        y (second curr-pos)
+        legal-moves (legal-moves-by-type type x y color has-moved chessboard)
+        ]
+    ;; (println "# of legal moves for" type "of color" color "are" (count legal-moves))
+    legal-moves))
 
 (defn allowed?
   "Returns true when move allowed"
