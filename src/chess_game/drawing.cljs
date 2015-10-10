@@ -14,17 +14,25 @@
   "A light blue color, designed for clicking on a white square."
   (graphics/make-color (- scale 50) (- scale 50) scale))
 
+(defn light-green
+  [scale]
+  "A light green color, designed for showing the currently selected tile."
+  (graphics/make-color (- scale 50) scale (- scale 50)))
+
 (defn light-red
   [scale]
-  "A light red color, designed showing the next legal move.."
+  "A light red, for showing the attack moves"
   (graphics/make-color scale (- scale 50) (- scale 50)))
-
 
 (defn dark-blue
   [scale]
   "A dark blue color, designed for clicking on a black square."
   (graphics/make-color scale scale (+ scale 50)))
 
+(defn dark-green
+  [scale]
+  "A dark green color, for showing the currently selected tile."
+  (graphics/make-color scale (+ 50 scale) scale))
 
 (defn dark-red
   [scale]
@@ -71,11 +79,11 @@
 
 (defn white-selected
   []
-  (light-blue 255))
+  (light-green 255))
 
 (defn black-selected
   []
-  (dark-blue 50))
+  (dark-green 50))
 
 (defn tile-fill
   [color selected legal-next-move attack]
@@ -121,17 +129,25 @@ There are probably lots more, but those are just some of them that came off the 
 
 (defn tile-fill-color
   [x y selected legal-move attack-move]
+  ;; (println "Selected tile is " selected)
+  (if (= selected [x y])
+    (println "Selected square is " x "," y))
   (tile-fill (square-color x y) selected legal-move attack-move))
 
 (defn get-color-from
   [i j]
+
+  ;;(let [selected (:selected-tile @env)]
+  ;;(println "Selected tile is" selected))
+
   (let [
-        env (get-dep :env)
-        selected        (= [i j] (:selected-tile @env))
+        env             (get-dep :env)
+        selected        (= [i j] (:curr-tile @env))
         legal-move      (boolean (some #(= [i j] %) (:legal-moves @env)))
         attack-move     (boolean (some #(= [i j] %) (:attack-moves @env)))
         ]
     (do
+      ;; (println "Selected is " (:curr-tile @env))
       (tile-fill-color i j selected legal-move attack-move))))
 
 (defn draw-checkered-board

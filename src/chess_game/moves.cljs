@@ -1,6 +1,7 @@
 (ns ^:figwheel-always chess-game.moves
     (:require [chess-game.directions :as d]
               [chess-game.pieces :as p]
+              [chess-game.board :as b]
               ))
 
 (defn open?
@@ -226,6 +227,35 @@
         ]
     ;; (println "# of legal moves for " type " of color " color " are " (count legal-moves))
     legal-moves))
+
+
+
+(defn next-legal-moves
+  "Get a sequence of triples where each triple is a (piece, new-location, chessboard)"
+  [color chessboard]
+
+  (let [positions  (keys chessboard)
+        all-pieces (map #(get chessboard %) positions)
+        curr-pieces (filter #(= (:color %) color) all-pieces)]
+
+    (for [piece curr-pieces
+          next-location (legal-moves-for-piece piece chessboard)]
+        {:piece piece :next next-location})))
+
+
+(defn score-next-legal-moves
+  [color chessboard]
+  (for [move (next-legal-moves color chessboard)]
+    (let [{:keys [piece next]} move
+          old-pos              (:curr-pos piece)
+          next-board           (b/update chessboard old-pos next)
+          score                (b/score color next-board)]
+      (do
+        {:score score :old-pos old-pos :next next}))))
+
+(defn max-score-next-legal-moves
+  [color chessboard]
+  (apply (partial max-key :score) (score-next-legal-moves color chessboard)))
 
 (defn total-legal-moves
   [curr-color chessboard]
