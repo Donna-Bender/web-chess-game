@@ -7,6 +7,7 @@
             [chess-game.config :as config]
             [chess-game.images :refer [get-images!]]
             [chess-game.board :as b]
+            [chess-game.score :as s]
             [chess-game.pieces :as p]
             [chess-game.drawing :as drawing]))
 
@@ -42,8 +43,8 @@
 
 (defn print-scores
   [word board]
-  (println word "move white score = " (b/score :white board))
-  (println word "move black score = " (b/score :black board)))
+  (println word "move white score = " (b/score-board :white board))
+  (println word "move black score = " (b/score-board :black board)))
 
 (defn in?
   [seq elem]
@@ -63,42 +64,54 @@
                                 nil
                                 (get chessboard selected))
 
-        curr-legal-moves      (cond
-                                (= curr-tile selected)      []
-                                (in? attack-moves selected) []
-                                :else (m/legal-moves-for selected selected-piece chessboard))
-        curr-attack-moves     (m/attack-moves-for
-                               selected selected-piece chessboard)]
-
-    (let [piece-will-move       (or (in? legal-moves selected)
-                                    (in? attack-moves selected))
-          new-chessboard        (if piece-will-move
-                                  (b/update chessboard curr-tile selected)
-                                  chessboard)
-          new-curr-tile         (if piece-will-move
-                                  nil
-                                  (when-not (= curr-tile selected) selected))]
+        white-selected        (cond
+                                (some? selected-piece) (p/white? selected-piece)
+                                (some? last-piece) (p/white? last-piece))]
 
 
-      (println "last-piece =>" last-piece)
+    (if white-selected
 
-      (if (some? last-piece)
-        (let [color (p/opposite (:color last-piece))]
-          (do
-            (println "Scoring for color" color)
-            (println "Max scoring move is"
-                     (m/max-score-next-legal-moves color new-chessboard)))))
+      (let [curr-legal-moves      (cond
+                                    (= curr-tile selected)      []
+                                    (in? attack-moves selected) []
+                                    :else (m/legal-moves-for selected selected-piece chessboard))
+            curr-attack-moves     (m/attack-moves-for
+                                   selected selected-piece chessboard)
+
+            piece-will-move       (or (in? legal-moves selected)
+                                      (in? attack-moves selected))
+            new-chessboard        (if piece-will-move
+                                    (b/update-board chessboard curr-tile selected)
+                                    chessboard)
+            new-curr-tile         (if piece-will-move
+                                    nil
+                                    (when-not (= curr-tile selected) selected))]
 
 
-      (swap! env assoc
-             :curr-tile     new-curr-tile
-             :last-piece    selected-piece
-             :legal-moves   curr-legal-moves
-             :attack-moves  (if (= curr-tile selected)
-                              []
-                              curr-attack-moves)
-             :chessboard    new-chessboard)
-    )))
+        (swap! env assoc
+               :curr-tile     new-curr-tile
+               :last-piece    selected-piece
+               :legal-moves   curr-legal-moves
+               :attack-moves  (if (= curr-tile selected)
+                                []
+                                curr-attack-moves)
+               :chessboard    new-chessboard)
+
+
+        (if (some? last-piece)
+          (let [color     (p/opposite (:color last-piece))
+                max-score (s/max-score-next-legal-moves color new-chessboard)]
+            (do
+              (println "Scoring for color" color)
+              (println "Max scoring move is" max-score)
+
+              (if (some? max-score)
+                (swap! env assoc
+                        :chessboard (b/update-board new-chessboard
+                                                    (:old-pos max-score)
+                                                    (:next max-score))))
+              )))
+        ))))
 
 (defn mouse-event-full
   []

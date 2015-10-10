@@ -1,8 +1,7 @@
 (ns ^:figwheel-always chess-game.moves
     (:require [chess-game.directions :as d]
-              [chess-game.pieces :as p]
-              [chess-game.board :as b]
-              ))
+              [chess-game.pieces :as p]))
+
 
 (defn open?
   [pos chessboard]
@@ -243,19 +242,6 @@
         {:piece piece :next next-location})))
 
 
-(defn score-next-legal-moves
-  [color chessboard]
-  (for [move (next-legal-moves color chessboard)]
-    (let [{:keys [piece next]} move
-          old-pos              (:curr-pos piece)
-          next-board           (b/update chessboard old-pos next)
-          score                (b/score color next-board)]
-      (do
-        {:score score :old-pos old-pos :next next}))))
-
-(defn max-score-next-legal-moves
-  [color chessboard]
-  (apply (partial max-key :score) (score-next-legal-moves color chessboard)))
 
 (defn total-legal-moves
   [curr-color chessboard]
@@ -277,14 +263,3 @@
         ]
     ;; (println "# of legal moves for" type "of color" color "are" (count legal-moves))
     legal-moves))
-
-(defn allowed?
-  "Returns true when move allowed"
-  [chessboard old-pos new-pos]
-  ;; TODO: perform reall check
-  (let [old-chessman (get chessboard old-pos)
-        new-chessman (get chessboard new-pos)]
-    (boolean (and old-chessman old-pos new-pos
-                  (or (nil? new-chessman)
-                      (not= (:color old-chessman)
-                            (:color new-chessman)))))))

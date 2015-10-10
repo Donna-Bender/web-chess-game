@@ -48,10 +48,22 @@
     '(6 7) (p/make :white :knight 6 7)
     '(7 7) (p/make :white :rook 7 7)))
 
-(defn update
+(defn allowed?
+  "Returns true when move allowed"
+  [chessboard old-pos new-pos]
+  ;; TODO: perform reall check
+  (let [old-chessman (get chessboard old-pos)
+        new-chessman (get chessboard new-pos)]
+    (boolean (and old-chessman old-pos new-pos
+                  (or (nil? new-chessman)
+                      (not= (:color old-chessman)
+                            (:color new-chessman)))))))
+
+
+(defn update-board
   [chessboard old-pos new-pos]
   (let [chessman (get chessboard old-pos)]
-    (if (m/allowed? chessboard old-pos new-pos)
+    (if (allowed? chessboard old-pos new-pos)
       (let [new-chessman (assoc chessman :has-moved true :curr-pos new-pos)]
         (assoc chessboard old-pos nil new-pos new-chessman))
       chessboard)))
@@ -97,7 +109,8 @@
   [color chessboard]
   (m/total-legal-moves color chessboard))
 
-(defn score
+
+(defn score-board
   "This is the Claude Shannon formula featured on: https://chessprogramming.wikispaces.com/Evaluation"
   [color chessboard]
   (let [k (kings-count-for color chessboard)
@@ -118,3 +131,17 @@
      (*   0.1   m)
 
      )))
+
+(defn score-next-legal-moves
+  [color chessboard]
+  (for [move (m/next-legal-moves color chessboard)]
+    (let [{:keys [piece next]} move
+          old-pos              (:curr-pos piece)
+          next-board           (update-board chessboard old-pos next)
+          score                (score-board color next-board)]
+      (do
+        {:score score :old-pos old-pos :next next}))))
+
+(defn max-score-next-legal-moves
+  [color chessboard]
+  (apply (partial max-key :score) (score-next-legal-moves color chessboard)))
